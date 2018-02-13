@@ -1,0 +1,230 @@
+<! doctype html>
+<html>
+
+<head>
+	<title> Data Visualisation Assignment </title>
+	<meta charset="UTF-8">
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<body>
+	<script>
+	
+		// set the dimensions and margins of the graph
+		var margin = {top: 20, right: 20, bottom: 50, left: 70},
+			width = 960 - margin.left - margin.right,
+			height = 500 - margin.top - margin.bottom;
+			
+		// parse the dates in the proper format
+		var parseTime = d3.timeParse("%b %Y");
+
+		// Chart 1: set the ranges for
+		var x = d3.scaleTime().range([0, width]);
+		var y = d3.scaleLinear().range([height, 0]);
+		
+		// Chart 1: define the line
+		var valueline = d3.line()
+							.x(function(d) { return x(d.Month); })
+							.y(function(d) { return y(d.AverageSizeOfArmy); });
+			
+		// Chart 1: append the svg object to the body of the page
+		// appends a 'group' element to 'svg'
+		// moves the 'group' element to the top left margin
+		var svg = d3.select("body")
+						.append("svg")
+							.attr("width", width + margin.left + margin.right)
+							.attr("height", height + margin.top + margin.bottom)
+						.append("g")
+							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		// Chart 2: set the ranges for
+		var x2 = d3.scaleOrdinal()
+					.range([0, width/6 , width/2, 5*width/6 , width]);
+		var y2 = d3.scaleLinear()
+					.range([height, 0]);
+
+		// Chart 2: append the svg object to the body of the page
+		var svg2 = d3.select("body")
+						.append("svg")
+							.attr("width", width + margin.left + margin.right)
+							.attr("height", height + margin.top + margin.bottom)
+						.append("g")
+							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		// Chart 2: Colour Scale	  April		 May		June	   July		  August	 September   October   November   December   January    February    March
+		var colourScale = new Array ("#ff0000", "#008800", "#008888", "#880088", "#ffff00", "#000088", "#ff00ff", "#888800", "#0000ff", "#880000", "#00ff00", "#00ffff");
+		
+		// Chart 2: Key Labels
+		var keyLabels = new Array ("April", "May", "June", "July", "August", "September", "October", "November", "December", "January", "February", "March"); 
+		
+		for(i=0; i<12; i++){
+			svg2.append("rect")
+					.attr("y", height - height/3 - (i * (width/35)))
+					.attr("height", width/40)
+					.attr("x", 19*width/24)
+					.attr("width", width/40)
+					.attr("fill", colourScale[i]);
+			
+			svg2.append("text")
+					.attr("y", height - height/3 - (i * (width/35)))
+					.attr("x", 11*width/12)
+					.attr("dy", "1em")
+					.style("text-anchor", "middle")
+					.text(keyLabels[i]);
+		}
+
+		// Read Data from file in local repository
+		d3.csv("Data/nightingale.csv", function (d) {
+			return {
+				Month: parseTime(d.Month),
+				AverageSizeOfArmy: +d["Average Size Of Army"],
+				ZymoticDiseases: +d["Zymotic Diseases"] ,
+				WoundsInjuries: +d["Wounds & Injuries"],
+				AllOtherCauses: +d["All Other Causes"],
+				ZymoticDiseases2: +d["Zymotic Diseases 2"],
+				WoundsInjuries2: +d["Wounds & Injuries 2"],
+				AllOtherCauses2: +d["All Other Causes 2"]
+			};
+		}).then(function(data) {
+			console.log(data);
+			
+			// Chart 1: Scale the range of the data
+			x.domain(d3.extent(data, function(d) {return d.Month; }));
+			y.domain([0, d3.max(data, function(d) { return d.AverageSizeOfArmy; })]);
+			
+			// Chart 1: Add the valueline path.
+			svg.append("path")
+				.attr("class", "line")
+				.attr("stroke", "purple")
+				.attr("stroke-width", 4)
+				.attr("fill", "none")
+				.attr("d", valueline(data));
+
+			// Chart 1: Add the x Axis
+			svg.append("g")
+				.attr("transform", "translate(0," + height + ")")
+				.call(d3.axisBottom(x));
+
+			// Chart 1: text label for the x axis
+			svg.append("text")             
+				.attr("transform", "translate(" + (width/2) + " ," + (height + margin.top + 20) + ")")
+				.style("text-anchor", "middle")
+				.text("Month");
+
+			// Chart 1: Add the y Axis 
+			svg.append("g")
+				.call(d3.axisLeft(y));
+
+			// Chart 1: text label for the y axis
+			svg.append("text")
+				.attr("transform", "rotate(-90)")
+				.attr("y", 0 - margin.left)
+				.attr("x",0 - (height / 2))
+				.attr("dy", "1em")
+				.style("text-anchor", "middle")
+				.text("Average Size of Army");
+				
+			// Chart 2: Scale the range of the data
+			x2.domain(["" ,"Zymotic Diseases" , "Wounds & Injuries", "All Other Causes"])
+			y2.domain([0, d3.sum(data, function(d) { return d.ZymoticDiseases;})]);
+			//console.log((d3.sum(data, function(d) { return d.ZymoticDiseases;})));
+			//console.log((d3.sum(data, function(d) { return d.WoundsInjuries;})));
+			//console.log((d3.sum(data, function(d) { return d.AllOtherCauses;})));
+			
+			// Chart 2: Needed to scale data to graph
+			var scale = d3.sum(data, function(d) { return d.ZymoticDiseases;})/height;
+			//console.log(scale);
+			
+			// Chart 2: Define arrays for rectangle endpoints and set first point
+			var zymoticRectHeight = new Array();
+			var woundsRectHeight = new Array();
+			var otherRectHeight = new Array();
+			
+			zymoticRectHeight[0] = data[0].ZymoticDiseases;
+			woundsRectHeight[0] = data[0].WoundsInjuries;
+			otherRectHeight[0] = data[0].AllOtherCauses;
+
+			
+			svg2.append("rect")
+					.attr("y", height - zymoticRectHeight[0]/scale)
+					.attr("height", zymoticRectHeight[0]/scale)
+					.attr("x", width/24)
+					.attr("width", width/4)
+					.attr("fill", colourScale[0]);
+					
+			svg2.append("rect")
+					.attr("y", height - woundsRectHeight[0]/scale)
+					.attr("height", woundsRectHeight[0]/scale)
+					.attr("x", 3*width/8)
+					.attr("width", width/4)
+					.attr("fill", colourScale[0]);
+					
+			svg2.append("rect")
+					.attr("y", height - otherRectHeight[0]/scale)
+					.attr("height", otherRectHeight[0]/scale)
+					.attr("x", 17*width/24)
+					.attr("width", width/4)
+					.attr("fill", colourScale[0]);
+			
+			
+			//loop through all values and assign points to array
+			for(i=1; i<24; i++){
+				zymoticRectHeight[i] = data[i].ZymoticDiseases + zymoticRectHeight[i-1];
+				woundsRectHeight[i] = data[i].WoundsInjuries + woundsRectHeight[i-1];
+				otherRectHeight[i] = data[i].AllOtherCauses + otherRectHeight[i-1];
+				//console.log((zymoticRectHeight[i]));
+				//console.log((woundsRectHeight[i]));
+				//console.log((otherRectHeight[i]));
+				
+				//Chart 2: Add bars for zymotic diseases
+				svg2.append("rect")
+						.attr("y", height - zymoticRectHeight[i]/scale)
+						.attr("height", (zymoticRectHeight[i] - zymoticRectHeight[i-1])/scale)
+						.attr("x", width/24)
+						.attr("width", width/4)
+						.attr("fill", colourScale[i%12]);
+						
+				// Chart 2: Add bars for wounds and injuries
+				svg2.append("rect")
+						.attr("y", height - woundsRectHeight[i]/scale)
+						.attr("height", (woundsRectHeight[i] - woundsRectHeight[i-1])/scale)
+						.attr("x", 3*width/8)
+						.attr("width", width/4)
+						.attr("fill", colourScale[i%12]);
+						
+				// Chart 2: Add bars for all other causes
+				svg2.append("rect")
+						.attr("y", height - otherRectHeight[i]/scale)
+						.attr("height", (otherRectHeight[i] - otherRectHeight[i-1])/scale)
+						.attr("x", 17*width/24)
+						.attr("width", width/4)
+						.attr("fill", colourScale[i%12]);
+			}
+			
+			// Chart 2: Add the x Axis
+			svg2.append("g")
+				.attr("transform", "translate(0," + height + ")")
+				.call(d3.axisBottom(x2));
+
+			// Chart 2: text label for the x axis
+			svg2.append("text")             
+				.attr("transform", "translate(" + (width/2) + " ," + (height + margin.top + 20) + ")")
+				.style("text-anchor", "middle")
+				.text("Cause of Death");
+				
+			// Chart 2: Add the y Axis
+			svg2.append("g")
+				.call(d3.axisLeft(y2));
+
+			// Chart 2: text label for the y axis 
+			svg2.append("text")
+				.attr("transform", "rotate(-90)")
+				.attr("y", 0 - margin.left)
+				.attr("x",0 - (height / 2))
+				.attr("dy", "1em")
+				.style("text-anchor", "middle")
+				.text("Number of Deaths");
+		});
+	</script>
+</body>
+</html>
