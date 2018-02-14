@@ -58,13 +58,14 @@
 		var keyLabels = new Array ("April", "May", "June", "July", "August", "September", "October", "November", "December", "January", "February", "March"); 
 		
 		for(i=0; i<12; i++){
+		// Chart 2: Append colour boxes for key
 			svg2.append("rect")
 					.attr("y", height - height/3 - (i * (width/35)))
 					.attr("height", width/40)
 					.attr("x", 19*width/24)
 					.attr("width", width/40)
 					.attr("fill", colourScale[i]);
-			
+		// Chart 2: Append Text for key
 			svg2.append("text")
 					.attr("y", height - height/3 - (i * (width/35)))
 					.attr("x", 11*width/12)
@@ -72,6 +73,58 @@
 					.style("text-anchor", "middle")
 					.text(keyLabels[i]);
 		}
+		
+		// Chart 3: append the svg object to the body of the page
+		var svg3 = d3.select("body")
+						.append("svg")
+							.attr("width", width + margin.left + margin.right)
+							.attr("height", height + margin.top + margin.bottom)
+						.append("g")
+							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		// Chart 3: append the circle object for zymotic diseases
+		svg3.append("circle")
+				.attr("cx", width/3)
+				.attr("cy", height/3)
+				.attr("r" , width/12)
+				.attr("fill", "red");
+		
+		// Chart 3: append the circle object for wounds & injuries	
+		svg3.append("circle")
+				.attr("cx", 2*width/3)
+				.attr("cy", height/3)
+				.attr("r" , width/12)
+				.attr("fill", "green");
+		
+		// Chart 3: append the circle object for all other causes	
+		svg3.append("circle")
+				.attr("cx", width/2)
+				.attr("cy", 2*height/3)
+				.attr("r" , width/12)
+				.attr("fill", "blue");
+				
+		// Chart 3: Text label for Zymotic Diseases
+		svg3.append("text")
+				.attr("transform", "translate(" + (width/3) + " ," + (1.1*height/3) + ")")
+				.style("text-anchor", "middle")
+				.attr("fill", "white")
+				.text("(Zymotic Diseases)");
+				
+		// Chart 3: Text label for Wounds & Injuries
+		svg3.append("text")
+				.attr("transform", "translate(" + (2*width/3) + " ," + (1.1*height/3) + ")")
+				.style("text-anchor", "middle")
+				.attr("fill", "white")
+				.text("(Wounds & Injuries)");
+				
+		// Chart 3: Text label for All other causes
+		svg3.append("text")
+				.attr("transform", "translate(" + (width/2) + " ," + (2.1*height/3) + ")")
+				.style("text-anchor", "middle")
+				.attr("fill", "white")
+				.text("(All Other Causes)");
+				
+							
 
 		// Read Data from file in local repository
 		d3.csv("Data/nightingale.csv", function (d) {
@@ -133,32 +186,34 @@
 			
 			// Chart 2: Needed to scale data to graph
 			var scale = d3.sum(data, function(d) { return d.ZymoticDiseases;})/height;
-			//console.log(scale);
 			
 			// Chart 2: Define arrays for rectangle endpoints and set first point
 			var zymoticRectHeight = new Array();
 			var woundsRectHeight = new Array();
 			var otherRectHeight = new Array();
 			
+			//Set the initial bar heights
 			zymoticRectHeight[0] = data[0].ZymoticDiseases;
 			woundsRectHeight[0] = data[0].WoundsInjuries;
 			otherRectHeight[0] = data[0].AllOtherCauses;
 
-			
+			// Chart 2: Attach initial rectangle for Zymotic Diseases
 			svg2.append("rect")
 					.attr("y", height - zymoticRectHeight[0]/scale)
 					.attr("height", zymoticRectHeight[0]/scale)
 					.attr("x", width/24)
 					.attr("width", width/4)
 					.attr("fill", colourScale[0]);
-					
+			
+			//Chart 2: Attach initial rectangle for Wounds&Injuries			
 			svg2.append("rect")
 					.attr("y", height - woundsRectHeight[0]/scale)
 					.attr("height", woundsRectHeight[0]/scale)
 					.attr("x", 3*width/8)
 					.attr("width", width/4)
 					.attr("fill", colourScale[0]);
-					
+			
+			// Chart 2: Attach initial rectangle for All other Causes			
 			svg2.append("rect")
 					.attr("y", height - otherRectHeight[0]/scale)
 					.attr("height", otherRectHeight[0]/scale)
@@ -167,7 +222,7 @@
 					.attr("fill", colourScale[0]);
 			
 			
-			//loop through all values and assign points to array
+			// Chart 2: loop through all values and assign points to array
 			for(i=1; i<24; i++){
 				zymoticRectHeight[i] = data[i].ZymoticDiseases + zymoticRectHeight[i-1];
 				woundsRectHeight[i] = data[i].WoundsInjuries + woundsRectHeight[i-1];
@@ -224,6 +279,37 @@
 				.attr("dy", "1em")
 				.style("text-anchor", "middle")
 				.text("Number of Deaths");
+				
+			// Chart 3: Text label for chart
+			svg3.append("text")             
+				.attr("transform", "translate(" + (width/2) + " ," + (height + margin.top + 20) + ")")
+				.style("text-anchor", "middle")
+				.text("Average Annual Rate of Mortality per 1000");
+			
+			// Chart 3: Text label for Zymotic Diseases
+			svg3.append("text")
+				.attr("transform", "translate(" + (width/3) + " ," + (height/3) + ")")
+				.style("text-anchor", "middle")
+				.attr("fill", "white")
+				.text((d3.sum(data, function(d) { return d.ZymoticDiseases2;}))/24);
+				
+			// Chart 3: Text label for wounds & injuries
+			svg3.append("text")
+				.attr("transform", "translate(" + (2*width/3) + " ," + (height/3) + ")")
+				.style("text-anchor", "middle")
+				.attr("fill", "white")
+				.text((d3.sum(data, function(d) { return d.WoundsInjuries2;}))/24);
+			
+			// Chart 3: Text label for All other causes			
+			svg3.append("text")
+				.attr("transform", "translate(" + (width/2) + " ," + (2*height/3) + ")")
+				.style("text-anchor", "middle")
+				.attr("fill", "white")
+				.text((d3.sum(data, function(d) { return d.AllOtherCauses2;}))/24);
+			
+			console.log((d3.sum(data, function(d) { return d.ZymoticDiseases2;}))/24);
+			console.log((d3.sum(data, function(d) { return d.WoundsInjuries2;}))/24);
+			console.log((d3.sum(data, function(d) { return d.AllOtherCauses2;}))/24);
 		});
 	</script>
 </body>
