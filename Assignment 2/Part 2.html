@@ -1,0 +1,195 @@
+<! doctype html>
+<html>
+
+<head>
+	<title> Data Visualisation Assignment </title>
+	<meta charset="UTF-8">
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<body>
+	<script>
+		
+		// Set the dimensions and margins of the graph
+		var margin = {top: 20, right: 20, bottom: 50, left: 70},
+			width = 960 - margin.left - margin.right,
+			height = 500 - margin.top - margin.bottom;
+	
+		// Parse the dates in the proper format
+		var parseDay = d3.timeParse("%e");
+	
+		// Parse the dates in the proper format
+		var parseMonth = d3.timeParse("%b");
+		
+		// Set the ranges for
+		var x = d3.scaleLinear().range([0, width]);
+		var y = d3.scaleLinear().range([height, 0]);
+		
+			
+		// Append the svg object to the body of the page
+		// appends a 'group' element to 'svg'
+		// moves the 'group' element to the top left margin
+		var svg = d3.select("body")
+						.append("svg")
+							.attr("width", width + margin.left + margin.right)
+							.attr("height", height + margin.top + margin.bottom)
+						.append("g")
+							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		// Read Data from file in local repository
+		d3.csv("Data/minard.csv", function (d) {
+			return {
+				//Month: parseTime(d.Month),
+				Lonc: +d["LONC"],
+				Latc: +d["LATC"] ,
+				City: d["CITY"],
+				Lont: +d["LONT"],
+				Temp: +d["TEMP"],
+				Days: +d["DAYS"],
+				Month: parseMonth(d.MON),
+				Day: parseDay(d.DAY),
+				//Day: +d["DAY"],
+				Lonp: +d["LONP"],
+				Latp: +d["LATP"],
+				Survivors: +d["SURV"],
+				Direction: d["DIR"],
+				Division: +d["DIV"],
+			};
+		}).then(function(data) {
+			console.log(data);
+			
+			// Max values on each axis
+			var xMax = (d3.max(data, function(d) { return d.Lonc;}));
+			var yMax = (d3.max(data, function(d) { return d.Latc;}));
+		
+			// Min values on each axis
+			var xMin = (24);
+			var yMin = (53.9);
+			
+			// Difference between Max and Min values on each axis
+			var xDiff = (xMax-xMin);
+			var yDiff = (yMax-yMin);
+			
+			// Scale the range of the data			
+			x.domain([xMin, xMax]);
+			y.domain([yMin, yMax]);
+			
+			// Define the line
+			var valueline = d3.line()
+							.x(function(d) { return ((((d.Lonp)-xMin)/xDiff)*width)-10 ; })
+							.y(function(d) { return (((yMax-(d.Latp))/yDiff)*height) ; });
+			
+			// Sentinels to ensure lines start from origin
+			var div2HasBegun = false;
+			var div3HasBegun = false;
+			
+			// Loop through each datum
+			for(i=1; i<48; i++){
+			//console.log(data[i].Division);
+			//console.log(data[i].Direction);
+				
+				// Orange line for div 1 away trip
+				if (data[i].Division == 1 && data[i].Direction == "A") {
+					console.log("Approved Div 1 Away");
+					svg.append("line")          
+						.style("stroke", "Orange")
+						.attr("stroke-width", data[i-1].Survivors/10000)
+						.attr("x1", ((((data[i-1].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y1", (((yMax-data[i-1].Latp)/yDiff)*height))
+						.attr("x2", ((((data[i].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y2", (((yMax-data[i].Latp)/yDiff)*height));
+						
+				// Lilac Line for div 1 return trip
+				} else if (data[i].Division == 1 && data[i].Direction == "R") {
+					console.log("Approved Div 1 Return");
+					svg.append("line")          
+						.style("stroke", "#8ca6d1")
+						.attr("stroke-width", data[i-1].Survivors/10000)
+						.attr("x1", ((((data[i-1].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y1", (((yMax-data[i-1].Latp)/yDiff)*height))
+						.attr("x2", ((((data[i].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y2", (((yMax-data[i].Latp)/yDiff)*height));
+						
+				// Orange line for div 2 away trip
+				} else if (data[i].Division == 2 && data[i].Direction == "A") {
+					console.log("Approved Div 1 Away");
+					
+					//Check if first datum for div 2
+					if (div2HasBegun == false){
+					svg.append("line")          
+						.style("stroke", "Orange")
+						.attr("stroke-width", data[i].Survivors/10000)
+						.attr("x1", ((((data[0].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y1", (((yMax-data[0].Latp)/yDiff)*height))
+						.attr("x2", ((((data[i].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y2", (((yMax-data[i].Latp)/yDiff)*height));
+					div2HasBegun = true;
+					}else{
+					svg.append("line")          
+						.style("stroke", "Orange")
+						.attr("stroke-width", data[i-1].Survivors/10000)
+						.attr("x1", ((((data[i-1].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y1", (((yMax-data[i-1].Latp)/yDiff)*height))
+						.attr("x2", ((((data[i].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y2", (((yMax-data[i].Latp)/yDiff)*height));
+					}
+					
+				// Lilac Line for div 2 return trip
+				} else if (data[i].Division == 2 && data[i].Direction == "R") {
+					console.log("Approved Div 2 Return");
+					svg.append("line")          
+						.style("stroke", "#8ca6d1")
+						.attr("stroke-width", data[i-1].Survivors/10000)
+						.attr("x1", ((((data[i-1].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y1", (((yMax-data[i-1].Latp)/yDiff)*height))
+						.attr("x2", ((((data[i].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y2", (((yMax-data[i].Latp)/yDiff)*height));
+						
+				// Orange line for div 3 away trip
+				} else if (data[i].Division == 3 && data[i].Direction == "A") {
+					console.log("Approved Div 3 Away");
+					//Check if first datum for div 2
+					if (div3HasBegun == false){
+					svg.append("line")          
+						.style("stroke", "Orange")
+						.attr("stroke-width", data[i].Survivors/10000)
+						.attr("x1", ((((data[0].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y1", (((yMax-data[0].Latp)/yDiff)*height))
+						.attr("x2", ((((data[i].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y2", (((yMax-data[i].Latp)/yDiff)*height));
+					div3HasBegun = true;
+					}else{
+					svg.append("line")          
+						.style("stroke", "Orange")
+						.attr("stroke-width", data[i-1].Survivors/10000)
+						.attr("x1", ((((data[i-1].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y1", (((yMax-data[i-1].Latp)/yDiff)*height))
+						.attr("x2", ((((data[i].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y2", (((yMax-data[i].Latp)/yDiff)*height));
+					}
+						
+				// Lilac Line for div 3 return trip
+				} else if (data[i].Division == 3 && data[i].Direction == "R") {
+					console.log("Approved Div 3 Return");
+					svg.append("line")          
+						.style("stroke", "#8ca6d1")
+						.attr("stroke-width", data[i-1].Survivors/10000)
+						.attr("x1", ((((data[i-1].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y1", (((yMax-data[i-1].Latp)/yDiff)*height))
+						.attr("x2", ((((data[i].Lonp)-xMin)/xDiff)*width)-10)
+						.attr("y2", (((yMax-data[i].Latp)/yDiff)*height));
+				}
+			}
+			
+			// Add labels for cities
+			for(i=0; i<20; i++){
+			svg.append("text") 
+				.attr("x", ((((data[i].Lonc)-xMin)/xDiff)*width) - 10)
+				.attr("y", (((yMax-(data[i].Latc))/yDiff)*height))
+				.style("text-anchor", "middle")
+				.text(data[i].City);
+			}
+		});
+		</script>
+</body>
+</html>
