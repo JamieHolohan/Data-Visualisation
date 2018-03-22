@@ -1,0 +1,50 @@
+<! doctype html>
+<html>
+
+<head>
+	<title> Data Visualisation Assignment </title>
+	<meta charset="UTF-8">
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<body>
+	<script>
+		// set the dimensions and margins of the graph
+		var margin = {top: 20, right: 20, bottom: 50, left: 70},
+			width = 960 - margin.left - margin.right,
+			height = 500 - margin.top - margin.bottom;
+			
+		// parse the dates in the proper format
+		var formatDate = d3.timeFormat("%m/%d/%Y %X");
+		var parseDate = d3.timeParse("%m/%e/%y %X");
+			
+		// Chart 1: append the svg object to the body of the page
+		// appends a 'group' element to 'svg'
+		// moves the 'group' element to the top left margin
+		var svg = d3.select("body")
+						.append("svg")
+							.attr("width", width + margin.left + margin.right)
+							.attr("height", height + margin.top + margin.bottom)
+						.append("g")
+							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+							
+		// Read Data from file in local repository
+		d3.csv("Data/MeteorologicalData.csv", function (d) {
+			return {
+				//Date: parseDate(d.Date),
+				//Date: parseDate(d['Date']),
+				//Date: formatDate('04/01/2016 00:00'),
+				//Date: formatDate(new Date('04/01/2016 00:00')),
+				Date: formatDate(new Date(d['Date'])),
+				WindDirection: +d["Wind Direction"],
+				WindSpeed: +d["Wind Speed (m/s)"],
+				Elevation: +d["Elevation (m)"]
+			};
+		}).then(function(data) {
+			console.log(data);
+			
+			
+		});
+	</script>
+</body>
+</html>
