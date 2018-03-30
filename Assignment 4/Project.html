@@ -28,23 +28,62 @@
 						.append("g")
 							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 							
+		svg.append("defs")
+			.append("pattern")
+			.attr("id", "bg")
+			.append("image")
+			.attr("xlink:href", "Images/MapLargeLabels");
+			
+		svg.append("rect")
+			.attr("fill", "url(#bg)");
+
+							
 		// Read Data from file in local repository
-		d3.csv("Data/MeteorologicalData.csv", function (d) {
+		/*d3.csv("Data/MeteorologicalData.csv", function (d) {
 			return {
-				//Date: parseDate(d.Date),
-				//Date: parseDate(d['Date']),
-				//Date: formatDate('04/01/2016 00:00'),
-				//Date: formatDate(new Date('04/01/2016 00:00')),
 				Date: formatDate(new Date(d['Date'])),
 				WindDirection: +d["Wind Direction"],
 				WindSpeed: +d["Wind Speed (m/s)"],
 				Elevation: +d["Elevation (m)"]
 			};
+		}).csv("Data/SensorData.csv", function (d) {
+			return {
+				Date: formatDate(new Date(d['Date Time'])),
+				Chemical: +d["Chemical"],
+				Monitor: +d["Monitor"],
+				Reading: +d["Reading"]
+			};
 		}).then(function(data) {
 			console.log(data);
 			
 			
+		});*/
+		
+		// Read Data from file in local repository
+		d3.csv("Data/MeteorologicalData.csv", function (d) {
+			return {
+				Date1: formatDate(new Date(d['Date'])),
+				WindDirection: +d["Wind Direction"],
+				WindSpeed: +d["Wind Speed (m/s)"],
+				Elevation: +d["Elevation (m)"]
+			};
+		}).then(function(data1) {
+			d3.csv("Data/SensorData.csv", function (d) {
+			return {
+				Date2: formatDate(new Date(d['Date Time '])),
+				Chemical: d["Chemical"],
+				Monitor: +d["Monitor"],
+				Reading: +d["Reading"]
+			};
+			}).then(function(data2) {
+				console.log(data1);
+				console.log(data2);
+			
+			
+			});
+			
 		});
+		
 	</script>
 </body>
 </html>
