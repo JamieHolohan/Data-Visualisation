@@ -70,10 +70,47 @@
 			.attr("height" , 720)
 			.attr("fill", "url(#bgwind)");
 		
+
+		//Compass for wind Image
+		svg.append("line")   
+				.style("stroke", "black")
+				.attr("stroke-width", 2 )
+				.attr("x1", 1380)
+				.attr("y1", 30)
+				.attr("x2", 1380)
+				.attr("y2", 90);
+				
+		svg.append("line")   
+				.style("stroke", "black")
+				.attr("stroke-width", 2 )
+				.attr("x1", 1350)
+				.attr("y1", 60)
+				.attr("x2", 1410)
+				.attr("y2", 60);
+				
+		svg.append("text")   
+				.attr("font-size", 10)
+				.attr("font-weight", "bold")
+				.attr("fill", "black")
+				.attr("x", 1380)
+				.attr("y", 25)
+				.style("text-anchor", "middle")
+				.text("N");
+		
+		//Creat Windspeed Indicator
+		svg.append("text")
+				.attr("font-size", 20)
+				.attr("font-weight", "bold")
+				.attr("fill", "black")
+				.attr("x", 1210)
+				.attr("y", 30)
+				.style("text-anchor", "middle")
+				.text("Wind Speed: ");
+		
 		// Read Data from file in local repository
 		d3.csv("Data/MeteorologicalData.csv", function (d) {
 			return {
-				Date1: formatDate(new Date(d['Date'])),
+				Date: formatDate(new Date(d['Date'])),
 				WindDirection: +d["Wind Direction"],
 				WindSpeed: +d["Wind Speed (m/s)"],
 				Elevation: +d["Elevation (m)"]
@@ -81,7 +118,7 @@
 		}).then(function(data1) {
 			d3.csv("Data/SensorData.csv", function (d) {
 			return {
-				Date2: formatDate(new Date(d['Date Time '])),
+				Date: formatDate(new Date(d['Date Time '])),
 				Chemical: d["Chemical"],
 				Monitor: +d["Monitor"],
 				Reading: +d["Reading"]
@@ -89,12 +126,82 @@
 			}).then(function(data2) {
 				console.log(data1);
 				console.log(data2);
-			
-			
+				var delay = 230;
+				
+				function windDateTransition(){
+				
+					var dateText = svg.append("text")   
+										.attr("font-size", 10)
+										.attr("font-weight", "bold")
+										.attr("fill", "black")
+										.attr("x", 740)
+										.attr("y", 25)
+										.style("text-anchor", "left");
+				
+					var monthText = svg.append("text")   
+										.attr("font-size", 15)
+										.attr("font-weight", "bold")
+										.attr("fill", "black")
+										.attr("x", 740)
+										.attr("y", 40)
+										.style("text-anchor", "left");
+										
+					var windSpeedText = svg.append("text")   
+										.attr("font-size", 20)
+										.attr("font-weight", "bold")
+										.attr("fill", "black")
+										.attr("x", 1270)
+										.attr("y", 30)
+										.style("text-anchor", "left-side");
+					repeat();
+				
+					function repeat(){
+						
+						//Cycle through date time combos
+						for (i=0; i<data1.length; i++){
+							dateText.transition()
+								.delay(i*delay)
+								.text(data1[i].Date)
+								.on("end", repeat);
+								
+							windSpeedText.transition()
+								.delay(i*delay)
+								.text((data1[i].WindSpeed) + "m/s")
+								.on("end", repeat);
+							
+							//Creat date bject to extract month
+							date = (new Date(data1[i].Date));
+							
+							//Assign delay for transition of month label to august
+							if (date.getMonth() == 3){
+								var augustDelay = (i+1)*delay
+							}
+							
+							//Assign delay for transition of month label to december
+							if (date.getMonth() == 7){
+								var decemberDelay = (i+1)*delay;
+							}
+						}	
+						
+						//Set month label to April
+						monthText.transition()
+									.text("April");
+									
+						//Set month label to August			
+						monthText.transition()
+									.delay(augustDelay)
+									.text("August");
+									
+						//Set month label to December
+						monthText.transition()
+									.delay(decemberDelay)
+									.text("December");
+	
+					}
+				}
+				windDateTransition();
 			});
-			
 		});
-		
 	</script>
 </body>
 </html>
