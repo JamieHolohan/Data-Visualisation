@@ -11,8 +11,8 @@
 	<script>
 		// set the dimensions and margins of the graph
 		var margin = {top: 20, right: 20, bottom: 50, left: 70},
-			width = 960 - margin.left - margin.right,
-			height = 500 - margin.top - margin.bottom;
+			width = 1530 - margin.left - margin.right,
+			height = 1510 - margin.top - margin.bottom;
 			
 		// parse the dates in the proper format
 		var formatDate = d3.timeFormat("%m/%d/%Y %X");
@@ -27,37 +27,48 @@
 							.attr("height", height + margin.top + margin.bottom)
 						.append("g")
 							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-							
+		
+		//Create Pattern for background Image
 		svg.append("defs")
 			.append("pattern")
 			.attr("id", "bg")
+			.attr('patternUnits', 'userSpaceOnUse')
+			.attr("width" , 720)
+			.attr("height" , 720)
 			.append("image")
-			.attr("xlink:href", "Images/MapLargeLabels");
+				.attr("width" , 720)
+				.attr("height" , 720)
+				.attr("xlink:href", "Images/MapLargeLabels.jpg");
+				
+		//Create Pattern for background Image
+		svg.append("defs")
+			.append("pattern")
+			.attr("id", "bgwind")
+			.attr('patternUnits', 'userSpaceOnUse')
+			.attr("width" , 720)
+			.attr("height" , 720)
+			.append("image")
+				.attr("width" , 720)
+				.attr("height" , 720)
+				.attr("xlink:href", "Images/MapWind.jpg");
 			
+		//Create Rect containing bacgound image
 		svg.append("rect")
+			.attr("id", "rect1")
+			.attr("x", 0)
+			.attr("y", 0)
+			.attr("width" , 720)
+			.attr("height" , 720)
 			.attr("fill", "url(#bg)");
-
-							
-		// Read Data from file in local repository
-		/*d3.csv("Data/MeteorologicalData.csv", function (d) {
-			return {
-				Date: formatDate(new Date(d['Date'])),
-				WindDirection: +d["Wind Direction"],
-				WindSpeed: +d["Wind Speed (m/s)"],
-				Elevation: +d["Elevation (m)"]
-			};
-		}).csv("Data/SensorData.csv", function (d) {
-			return {
-				Date: formatDate(new Date(d['Date Time'])),
-				Chemical: +d["Chemical"],
-				Monitor: +d["Monitor"],
-				Reading: +d["Reading"]
-			};
-		}).then(function(data) {
-			console.log(data);
-			
-			
-		});*/
+		
+		//Create Rect containing bacgound image
+		svg.append("rect")
+			.attr("id", "rect2")
+			.attr("x", 720)
+			.attr("y", 0)
+			.attr("width" , 720)
+			.attr("height" , 720)
+			.attr("fill", "url(#bgwind)");
 		
 		// Read Data from file in local repository
 		d3.csv("Data/MeteorologicalData.csv", function (d) {
