@@ -10,10 +10,19 @@
 <body>
 	<script>
 	
+		//Delay between updates
+		var delay = 230;
+		var numWindArrows = 25;
+		var opacity = 0.5;
+	
 		// set the dimensions and margins of the graph
-		var margin = {top: 20, right: 20, bottom: 50, left: 20},
+		var margin = {top: 20, right: 20, bottom: 20, left: 20},
 			width = 1530 - margin.left - margin.right,
 			height = 2230 - margin.top - margin.bottom;
+			
+		var windMapMargin = {top: 100, right: 20, bottom: 20, left: 20},
+			windMapWidth = 720 -  windMapMargin.left - windMapMargin.right,
+			windMapHeight = 720 -  windMapMargin.top -  windMapMargin.bottom;
 			
 		// parse the dates in the proper format
 		var formatDate = d3.timeFormat("%m/%d/%Y %X");
@@ -25,9 +34,50 @@
 		var svg = d3.select("body")
 						.append("svg")
 							.attr("width", width + margin.left + margin.right)
-							.attr("height", height + margin.top + margin.bottom)
-						.append("g")
-							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+							.attr("height", height + margin.top + margin.bottom);
+		
+		//Defn for Background group
+		var background = svg.append("g");
+		
+		//Wind Map indicator Group
+		var windHUD = svg.append("g")
+							.attr("transform", "translate(720, 0)");
+							
+		//WindMap compass group
+		var compass = windHUD.append("g")
+								.attr("transform", "translate(640, 25)");
+		
+		//Windmap date+time indicator group
+		var dateTime = windHUD.append("g")
+								.attr("transform", "translate(20, 25)");
+			
+		//Windmap windspeed indicator group
+		var windSpeed = windHUD.append("g")
+								.attr("transform", "translate(520, 30)");
+		
+		//Windmap wind direction arrow group
+		var windArrowGroup = windHUD.append("g")
+									.attr("width", 680)
+									.attr("height", 680)
+									.attr("transform", "translate(70, 120)");
+		
+		//Coordinates for vertices in arrow
+		var arrowData = 
+		[
+			{x:0 ,y:-20},
+			{x:5 ,y:0},
+			{x:2 ,y:0},
+			{x:2 ,y:20},
+			{x:-2 ,y:20},
+			{x:-2 ,y:0},
+			{x:-5 ,y:0},
+			{x:0 ,y:-20}
+		];
+		
+		//Definition of line
+		var line = d3.line()
+						.x(function(d) {return d.x})
+						.y(function(d) {return d.y});
 		
 		//Create Pattern for background Image
 		svg.append("defs")
@@ -68,26 +118,33 @@
 				.attr("xlink:href", "Images/MapWind.jpg");
 			
 		//Create Rect top left containing background image
-		var image1 = svg.append("rect")
-						.attr("id", "rect1")
+		var image1 = background.append("rect")
 						.attr("x", 0)
 						.attr("y", 0)
 						.attr("width" , 720)
 						.attr("height" , 720)
-						.attr("fill", "url(#bg)");
+						.attr("fill", "url(#bgwind)");
+						//.attr("fill-opacity", 0.5);
 		
 		//Create Rect top right containing wind image
-		var image2 = svg.append("rect")
-							.attr("id", "rect2")
+		var image2 = background.append("rect")
 							.attr("x", 720)
 							.attr("y", 0)
 							.attr("width" , 720)
 							.attr("height" , 720)
 							.attr("fill", "url(#bgwind)");
+		
+		//Create Rect top right containing wind image for day night overlay
+		var dayNightOverLayWind = background.append("rect")
+											.attr("x", 730)
+											.attr("y", 10)
+											.attr("width" , 700)
+											.attr("height" , 700)
+											.attr("fill", "black")
+											.attr("fill-opacity", opacity);
 			
 		//Create Rect bottom containing map
-		var image3 = svg.append("rect")
-							.attr("id", "rect3")
+		var image3 = background.append("rect")
 							.attr("x", 360)
 							.attr("y", 720)
 							.attr("width" , 720)
@@ -96,40 +153,96 @@
 		
 
 		//Compass for wind Image
-		var compassVertical = svg.append("line")   
+		var compassVertical = compass.append("line")   
 									.style("stroke", "black")
 									.attr("stroke-width", 2 )
-									.attr("x1", 1390)
-									.attr("y1", 30)
-									.attr("x2", 1390)
-									.attr("y2", 90);
+									.attr("x1", 30)
+									.attr("y1", 5)
+									.attr("x2", 30)
+									.attr("y2", 65);
 				
-		var compassHorizontal = svg.append("line")   
+		var compassHorizontal = compass.append("line")   
 									.style("stroke", "black")
 									.attr("stroke-width", 2 )
-									.attr("x1", 1360)
-									.attr("y1", 60)
-									.attr("x2", 1420)
-									.attr("y2", 60);
+									.attr("x1", 0)
+									.attr("y1", 35)
+									.attr("x2", 60)
+									.attr("y2", 35);
+									
+		var compassPointer = compass.append("line")
+									.style("stroke", "red")
+									.attr("stroke-width", 1 )
+									.attr("x1", 0)
+									.attr("y1", 0)
+									.attr("x2", 0)
+									.attr("y2", -30);		
 				
-		var compassIcon = svg.append("text")   
+		var compassNorth = compass.append("text")   
 								.attr("font-size", 10)
 								.attr("font-weight", "bold")
 								.attr("fill", "red")
-								.attr("x", 1390)
-								.attr("y", 25)
+								.attr("x", 30)
+								.attr("y", 0)
 								.style("text-anchor", "middle")
 								.text("N");
 		
-		//Create Windspeed Indicator
-		var winspeedText = svg.append("text")
+		//Define the text label for the date+time
+		var dateText = dateTime.append("text")   
+								.attr("font-size", 10)
+								.attr("font-weight", "bold")
+								.attr("fill", "black")
+								.attr("x", 0)
+								.attr("y", 0)
+								.style("text-anchor", "left");
+		
+		//Definition for label for current month
+		var monthText = dateTime.append("text")   
+								.attr("font-size", 15)
+								.attr("font-weight", "bold")
+								.attr("fill", "black")
+								.attr("x", 0)
+								.attr("y", 15)
+								.style("text-anchor", "left");
+								
+		//Definition for label Windspeed Indicator
+		var windSpeedText = windSpeed.append("text")
 								.attr("font-size", 20)
 								.attr("font-weight", "bold")
 								.attr("fill", "black")
-								.attr("x", 1230)
-								.attr("y", 30)
+								.attr("x", 0)
+								.attr("y", 0)
 								.style("text-anchor", "middle")
 								.text("Wind Speed: ");
+		
+		//Definition for label for windspeed number
+		var windSpeedNumber = windSpeed.append("text")   
+									.attr("font-size", 20)
+									.attr("font-weight", "bold")
+									.attr("fill", "black")
+									.attr("x", 55)
+									.attr("y", 0)
+									.style("text-anchor", "left-side");
+									
+		var windArrows = [];
+		
+        //Definition for shape of arrow for wind direction
+		for (i=0; i<numWindArrows; i++){
+			var across = ((windMapWidth/5) * ((i)%5));
+			var down = ((windMapHeight/5) * (Math.floor((i)/5)));
+			
+			var windArrow = windArrowGroup.append("g")
+							.attr("transform", "translate(" + across + "," + down + ")")
+							.selectAll("path")
+							.data([arrowData])
+							.enter()
+							.append("path")
+							.attr("d", line)
+							.attr("fill", "cyan")
+							.attr("stroke", "blue")
+							.attr("stroke-width", 1);
+							
+			windArrows.push(windArrow);
+		}							
 		
 		// Read Data from file in local repository
 		d3.csv("Data/MeteorologicalData.csv", function (d) {
@@ -150,40 +263,11 @@
 			}).then(function(data2) {
 				console.log(data1);
 				console.log(data2);
-				var delay = 230;
+				
+				
+				var windArrowScale = 3/(d3.max(data1, function(d) { return d.WindSpeed; }));
 				
 				function windMapAnimation(){
-				
-					var dateText = svg.append("text")   
-										.attr("font-size", 10)
-										.attr("font-weight", "bold")
-										.attr("fill", "black")
-										.attr("x", 740)
-										.attr("y", 25)
-										.style("text-anchor", "left");
-				
-					var monthText = svg.append("text")   
-										.attr("font-size", 15)
-										.attr("font-weight", "bold")
-										.attr("fill", "black")
-										.attr("x", 740)
-										.attr("y", 40)
-										.style("text-anchor", "left");
-										
-					var windSpeedText = svg.append("text")   
-										.attr("font-size", 20)
-										.attr("font-weight", "bold")
-										.attr("fill", "black")
-										.attr("x", 1290)
-										.attr("y", 30)
-										.style("text-anchor", "left-side");
-										
-					var windDirectionArrow = svg.append("line")
-												.style("stroke", "black")
-												.attr("stroke-width", 2 )
-												.attr("length", 10)
-												.attr("x", 1080)
-												.attr("y", 360);
 	
 					repeat();
 				
@@ -191,26 +275,87 @@
 						
 						//Cycle through date time combos
 						for (i=0; i<data1.length; i++){
+							//Transition between dates
 							dateText.transition()
 								.delay(i*delay)
 								.text(data1[i].Date)
 								.on("end", repeat);
 								
-							windSpeedText.transition()
+							//Transition between windspeed values
+							windSpeedNumber.transition()
 								.delay(i*delay)
 								.text((data1[i].WindSpeed) + "m/s")
 								.on("end", repeat);
+								
+							//Change rotation of wind direction arrows
+							for (j=0; j<windArrows.length; j++){
+								windArrows[j].transition()
+									.delay(i*delay)
+									.attr("transform", "rotate(" + data1[i].WindDirection + ") scale(" + (data1[i].WindSpeed)*(windArrowScale) + ")");
+							}
 							
+							//Change rotation of wind direction arrows
+							compassPointer.transition()
+								.delay(i*delay)
+								.attr("transform", "translate(30, 35) rotate(" + data1[i].WindDirection + ")");
+								
 							//Creat date bject to extract month
 							date = (new Date(data1[i].Date));
 							
+							switch(date.getHours())
+							{
+								case 00:
+									opacity = 0.5;
+									break;
+									
+								case 12:
+									opacity = 0;
+									break;
+									
+								case 00:
+									opacity = 0.5;
+									break;
+									
+								case 03:
+									opacity = 0.4;
+									break;
+									
+								case 21:
+									opacity = 0.4;
+									break;
+									
+								case 06:
+									opacity = 0.25;
+									break;
+									
+								case 18:
+									opacity = 0.25;
+									break;
+									
+								case 09:
+									opacity = 0.1;
+									break;
+									
+								case 15:
+									opacity = 0.1;
+									break;
+							}
+								
+							//Transition between windspeed values
+							dayNightOverLayWind.transition()
+								.delay(i*delay)
+								.attr("fill-opacity", opacity)
+								.on("end", repeat);
+							
 							//Assign delay for transition of month label to august
-							if (date.getMonth() == 3){
+							if (date.getMonth() == 3)
+							{
 								var augustDelay = (i+1)*delay
 							}
 							
 							//Assign delay for transition of month label to december
-							if (date.getMonth() == 7){
+							if (date.getMonth() == 7)
+							{
 								var decemberDelay = (i+1)*delay;
 							}
 						}	
@@ -228,7 +373,6 @@
 						monthText.transition()
 									.delay(decemberDelay)
 									.text("December");
-	
 					}
 				}
 				windMapAnimation();
